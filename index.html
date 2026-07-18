@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=yes">
+  <meta name="theme-color" content="#172017">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coop County">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+  <title>Coop County</title>
+  <style>
+    :root{
+      --ink:#f0d9a6;
+      --ink-soft:#d7bb80;
+      --panel:#172017;
+      --panel-2:#202a1d;
+      --edge:#706142;
+      --shadow:rgba(0,0,0,.56);
+      --focus:#fff1c8;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-right:env(safe-area-inset-right,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
+      --safe-left:env(safe-area-inset-left,0px);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#11170f;color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+    body{overflow:auto;padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left)}
+    button,input,textarea{font:inherit}
+    button{touch-action:manipulation}
+    .app-shell{min-height:100svh;display:grid;place-items:center;background:#11170f}
+    .illustration{
+      position:relative;
+      width:min(100vw,calc(100svh * 1.5));
+      aspect-ratio:3/2;
+      max-height:100svh;
+      background:url("coop-county-master.png") center/100% 100% no-repeat;
+      overflow:hidden;
+      isolation:isolate;
+    }
+    .hotspot,.count-btn,.capture-btn,.view-all{
+      appearance:none;border:0;background:transparent;color:inherit;position:absolute;cursor:pointer;
+    }
+    .hotspot:focus-visible,.count-btn:focus-visible,.capture-btn:focus-visible,.view-all:focus-visible{
+      outline:3px solid var(--focus);outline-offset:2px;border-radius:10px;
+    }
+    .hotspot{border-radius:14px}
+    .hotspot:hover{box-shadow:inset 0 0 0 2px rgba(240,217,166,.36)}
+    .clock{
+      position:absolute;left:85.45%;top:1.8%;width:12.25%;height:15.1%;
+      border-radius:1.15vw;background:rgba(23,32,23,.96);border:1px solid rgba(160,139,91,.48);
+      box-shadow:0 .35vw .85vw var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;
+      text-align:center;color:#f0dfb7;line-height:1.05;padding:.55vw;
+    }
+    .clock .date{font-size:clamp(11px,1.32vw,24px)}
+    .clock .time{font-size:clamp(18px,2.22vw,40px);font-weight:700;margin:.5vw 0}
+    .clock .day-note{font-size:clamp(10px,1.08vw,20px);white-space:nowrap}
+    .counter-value{
+      position:absolute;transform:translate(-50%,-50%);z-index:3;min-width:5.25%;height:7.2%;
+      display:grid;place-items:center;border-radius:.75vw;
+      color:#f3dfb3;font-size:clamp(25px,3.65vw,68px);line-height:1;font-weight:700;
+      background:rgba(57,58,45,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+      text-shadow:0 2px 2px rgba(0,0,0,.45);
+    }
+    #lucyValue{left:25.1%;top:71.2%}
+    #totalValue{left:47.35%;top:71.2%;min-width:6.4%}
+    #ethelValue{left:68.45%;top:71.2%}
+    .count-btn{z-index:5;width:5.15%;height:5.35%;bottom:15.9%;border-radius:.45vw}
+    .count-btn.minus.lucy{left:20.45%}.count-btn.plus.lucy{left:25.7%}
+    .count-btn.minus.ethel{left:63.25%}.count-btn.plus.ethel{left:68.55%}
+    .count-btn:active{background:rgba(240,217,166,.14)}
+    .log-btn{left:40.55%;top:78.4%;width:14.2%;height:4.9%;z-index:6;border-radius:.5vw}
+    .side-scratch{left:78.45%;top:51.45%;width:18.75%;height:9.1%}
+    .side-journal{left:78.45%;top:60.65%;width:18.75%;height:8.8%}
+    .side-tools{left:78.45%;top:69.55%;width:18.75%;height:8.8%}
+    .overview-hotspot{left:15.1%;top:86.45%;width:26.45%;height:11.95%}
+    .recent-hotspot{left:41.6%;top:86.45%;width:43.2%;height:11.95%}
+    .view-all{left:76.35%;top:93.7%;width:6.7%;height:3.9%;z-index:6;border-radius:.4vw}
+    .metric-value{
+      position:absolute;z-index:4;top:92.1%;transform:translate(-50%,-50%);min-width:4.3%;height:3.25%;
+      display:grid;place-items:center;background:rgba(23,32,23,.94);color:var(--ink-soft);font-weight:700;
+      font-size:clamp(12px,1.45vw,26px);border-radius:.35vw;
+    }
+    #metricTotal{left:21.45%}#metricAverage{left:28.3%}#metricBest{left:35.15%}
+    .recent-lines{
+      position:absolute;z-index:4;left:46.1%;top:90.9%;width:28.4%;height:5.6%;pointer-events:none;
+      color:var(--ink-soft);font-size:clamp(8px,.86vw,16px);line-height:1.45;overflow:hidden;
+      text-shadow:0 1px 1px #000;
+    }
+    .capture-pair{position:absolute;z-index:8;right:3.55%;bottom:2.3%;display:flex;gap:.65vw;align-items:center}
+    .capture-btn{
+      position:relative;width:clamp(44px,5.15vw,78px);aspect-ratio:1;border-radius:50%;
+      background:rgba(23,32,23,.94);border:2px solid rgba(212,187,128,.62);box-shadow:0 .3vw .8vw var(--shadow);
+      display:grid;place-items:center;color:#caae72;
+    }
+    .capture-btn svg{width:51%;height:51%;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+    .capture-btn.listening{animation:pulse 1s ease-in-out infinite}
+    @keyframes pulse{50%{box-shadow:0 0 0 .55vw rgba(212,187,128,.25),0 .3vw .8vw var(--shadow)}}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .modal-backdrop{position:fixed;inset:0;z-index:30;background:rgba(7,10,7,.62);display:none;align-items:center;justify-content:center;padding:18px}
+    .modal-backdrop.open{display:flex}
+    .modal{
+      width:min(560px,96vw);max-height:min(82svh,720px);overflow:auto;background:linear-gradient(180deg,#202b1f,#141c15);
+      color:#f0d9a6;border:1px solid #7d6c49;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.65);padding:20px;
+    }
+    .modal header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+    .modal h2{margin:0;font-size:clamp(22px,4vw,34px);font-weight:500}
+    .close{border:1px solid #806e4b;background:#2b3929;color:#f0d9a6;border-radius:50%;width:42px;height:42px;font-size:24px;cursor:pointer}
+    .modal label{display:block;margin:.8rem 0 .35rem}
+    .modal input[type=text],.modal textarea{width:100%;border:1px solid #8b7750;background:#f4ead4;color:#302318;border-radius:10px;padding:11px 12px;font-size:16px}
+    .modal textarea{min-height:130px;resize:vertical}
+    .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+    .action{border:1px solid #8c7650;background:#2a3828;color:#f0d9a6;border-radius:10px;padding:10px 14px;cursor:pointer}
+    .action.primary{background:#70502f}
+    .list{display:grid;gap:9px;margin-top:14px}
+    .list-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid rgba(205,178,116,.25);padding-top:10px}
+    .list-item.done .item-text{text-decoration:line-through;opacity:.58}
+    .scratch-add{margin-top:14px}
+    .scratch-add-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:stretch}
+    .scratch-add-row input{min-width:0}
+    .scratch-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .scratch-filters{display:flex;gap:7px;flex-wrap:wrap}
+    .scratch-filter.active{background:#70502f;border-color:#b99b67}
+    .scratch-summary{margin:12px 0 0;color:#cdb47b;font-size:.92rem}
+    .scratch-list{margin-top:7px}
+    .scratch-check{width:22px;height:22px;accent-color:#9a7449;cursor:pointer}
+    .scratch-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .scratch-actions .action{padding:7px 10px}
+    .scratch-empty{border:1px dashed rgba(205,178,116,.34);border-radius:10px;padding:18px;text-align:center;color:#cdb47b}
+    .item-text{overflow-wrap:anywhere;line-height:1.35}
+    @media (max-width:520px){
+      .scratch-add-row{grid-template-columns:1fr}
+      .scratch-toolbar{align-items:stretch}
+      .scratch-filters{width:100%}
+      .scratch-filters .action{flex:1}
+      .scratch-toolbar>#clearDone{width:100%}
+      .list-item{grid-template-columns:auto minmax(0,1fr)}
+      .scratch-actions{grid-column:2;justify-content:flex-start}
+    }
+    .journal-form{border:1px solid rgba(205,178,116,.28);border-radius:14px;padding:14px;background:rgba(255,255,255,.025)}
+    .journal-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .journal-photo-preview{display:none;margin-top:10px;position:relative}
+    .journal-photo-preview.show{display:block}
+    .journal-photo-preview img{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:12px;border:1px solid rgba(205,178,116,.35)}
+    .journal-entry-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .journal-badge{display:inline-block;border:1px solid rgba(205,178,116,.35);border-radius:999px;padding:3px 8px;color:#d7bb80;font-size:.75rem;white-space:nowrap}
+    .journal-entry-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+    .journal-entry-actions .action{padding:7px 10px}
+    .journal-entry-photo{cursor:pointer;border:0;background:transparent;padding:0;width:100%;text-align:left}
+    .journal-empty{border:1px dashed rgba(205,178,116,.34);border-radius:10px;padding:18px;text-align:center;color:#cdb47b}
+    .photo-lightbox{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:20px}
+    .photo-lightbox.open{display:flex}
+    .photo-lightbox img{max-width:96vw;max-height:88svh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+    .photo-lightbox .close{position:absolute;right:18px;top:calc(18px + var(--safe-top))}
+    @media (max-width:520px){.journal-form-grid{grid-template-columns:1fr}.journal-entry-head{display:block}.journal-badge{margin-top:5px}}
+
+    .tool-section{border:1px solid rgba(205,178,116,.28);border-radius:14px;padding:14px;margin-top:12px;background:rgba(255,255,255,.025)}
+    .tool-section h3{margin:0 0 6px;font-size:1.08rem}
+    .tool-section p{margin:0 0 10px;color:#cdb47b;line-height:1.4}
+    .tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .tool-grid .action{width:100%;text-align:center}
+    .tool-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+    .tool-stat{border:1px solid rgba(205,178,116,.24);border-radius:10px;padding:10px;background:rgba(0,0,0,.14)}
+    .tool-stat strong{display:block;font-size:1.35rem;color:#f0d9a6}
+    .tool-stat span{display:block;color:#cdb47b;font-size:.8rem;margin-top:2px}
+    .status-line{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid rgba(205,178,116,.22);padding-top:10px;margin-top:10px}
+    .status-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(205,178,116,.32);border-radius:999px;padding:5px 9px;font-size:.82rem}
+    .status-dot{width:9px;height:9px;border-radius:50%;background:#b75547}.status-dot.online{background:#7ca45e}
+    .action.danger{background:#6e302b;border-color:#a4584e}.action.success{background:#3d6338;border-color:#6e965f}
+    .tool-file{display:none}
+    @media (max-width:520px){.tool-grid,.tool-stats{grid-template-columns:1fr}}
+    .entry{border-top:1px solid rgba(205,178,116,.25);padding:10px 0;line-height:1.4}
+    .entry time{display:block;color:#cdb47b;font-size:.88rem;margin-bottom:2px}
+    .entry img{max-width:100%;border-radius:10px;margin-top:8px}
+    .status{position:fixed;z-index:40;left:50%;bottom:calc(18px + var(--safe-bottom));transform:translateX(-50%);max-width:min(90vw,620px);background:#172017;color:#f0d9a6;border:1px solid #887550;border-radius:999px;padding:10px 16px;box-shadow:0 8px 25px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+    .status.show{opacity:1}
+    .device-note{font-size:.85rem;color:#cdb47b;margin-top:10px}
+    @media (max-aspect-ratio:3/2){
+      .illustration{width:100vw;height:auto;max-height:none}
+      .app-shell{align-items:start}
+    }
+    @media (orientation:portrait) and (max-width:800px){
+      body{background:#11170f}
+      .app-shell{min-height:auto;display:block;overflow-x:auto;overscroll-behavior-x:contain}
+      .illustration{width:150vw;max-width:none;min-width:760px}
+      .capture-pair{right:3.4%}
+    }
+    html[data-os="ios"] .capture-btn,html[data-os="android"] .capture-btn{min-width:48px}
+
+    /* Phase 2 Item 4: Production Center and tucked-away utility links */
+    .utility-link-list{display:grid;gap:9px;margin-top:12px}
+    .utility-link-card{border:1px solid rgba(205,178,116,.28);border-radius:12px;padding:11px;background:rgba(0,0,0,.14)}
+    .utility-link-card strong{display:block;font-size:1.03rem;overflow-wrap:anywhere}
+    .utility-link-card a{display:block;color:#e1c384;margin-top:4px;overflow-wrap:anywhere}
+    .utility-link-card p{white-space:pre-wrap;margin:7px 0 0;color:#cdb47b}
+    .utility-link-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .utility-link-actions .action{padding:7px 10px}
+    .production-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .production-stat{border:1px solid rgba(205,178,116,.25);border-radius:12px;padding:12px;background:rgba(0,0,0,.14)}
+    .production-stat strong{display:block;font-size:1.55rem;color:#f0d9a6}
+    .production-stat span{display:block;color:#cdb47b;font-size:.78rem;margin-top:3px}
+    .trend-line{margin-top:12px;border:1px solid rgba(205,178,116,.25);border-radius:12px;padding:12px;background:rgba(255,255,255,.025);line-height:1.45}
+    .production-chart{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;align-items:end;min-height:210px;margin-top:14px;padding:14px 8px 8px;border:1px solid rgba(205,178,116,.24);border-radius:12px;background:rgba(0,0,0,.14)}
+    .production-day{height:180px;display:grid;grid-template-rows:22px 1fr 22px;align-items:end;justify-items:center;min-width:0}
+    .production-value{font:700 .76rem/1 system-ui,sans-serif}
+    .production-bar{width:min(32px,72%);height:var(--height);min-height:3px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,#f1d99e,#a7803f)}
+    .production-label{color:#cdb47b;font:700 .68rem/1 system-ui,sans-serif;white-space:nowrap}
+    .submodal-note{color:#cdb47b;font-size:.9rem}
+    @media(max-width:520px){.production-summary{grid-template-columns:1fr}.production-chart{gap:3px}.production-label{font-size:.59rem}}
+
+    /* Phase 2 Item 5: full 30-Day Overview */
+    .overview-intro{margin:0 0 12px;color:#cdb47b;line-height:1.45}
+    .overview-section{margin-top:14px;border:1px solid rgba(205,178,116,.25);border-radius:14px;padding:13px;background:rgba(255,255,255,.025)}
+    .overview-section h3{margin:0 0 9px;font-size:1.05rem}
+    .overview-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .coop-total{border:1px solid rgba(205,178,116,.24);border-radius:12px;padding:12px;background:rgba(0,0,0,.14)}
+    .coop-total strong{display:block;font-size:1.45rem}.coop-total span{display:block;color:#cdb47b;font-size:.8rem;margin-top:3px}
+    .split-track{height:12px;border-radius:999px;overflow:hidden;background:#263122;display:flex;margin-top:10px;border:1px solid rgba(205,178,116,.22)}
+    .split-lucy{background:#c59a57}.split-ethel{background:#7f9563}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:10px}
+    .calendar-weekday{text-align:center;color:#cdb47b;font:700 .68rem/1 system-ui,sans-serif;padding:2px 0}
+    .calendar-day{min-height:58px;border:1px solid rgba(205,178,116,.22);border-radius:9px;padding:6px;background:rgba(0,0,0,var(--day-alpha));display:flex;flex-direction:column;justify-content:space-between;gap:5px}
+    .calendar-day.outside{visibility:hidden}
+    .calendar-day.today{outline:2px solid #e1c384;outline-offset:1px}
+    .calendar-date{font:700 .7rem/1 system-ui,sans-serif;color:#cdb47b}
+    .calendar-eggs{font:800 1rem/1 system-ui,sans-serif;color:#f0d9a6}
+    .calendar-eggs small{display:block;font-size:.58rem;color:#cdb47b;margin-top:3px;font-weight:700}
+    .overview-history{display:grid;gap:7px;max-height:245px;overflow:auto;padding-right:3px}
+    .overview-history-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid rgba(205,178,116,.19);padding-top:8px}
+    .overview-history-row:first-child{border-top:0;padding-top:0}
+    .overview-history-row time{display:block;color:#cdb47b;font-size:.78rem}.overview-history-row strong{font-size:1rem}
+    .overview-history-count{font:800 1.15rem/1 system-ui,sans-serif;color:#f0d9a6;white-space:nowrap}
+    @media(max-width:520px){.overview-split{grid-template-columns:1fr}.calendar-grid{gap:4px}.calendar-day{min-height:51px;padding:5px}.calendar-date{font-size:.62rem}.calendar-eggs{font-size:.9rem}}
+
+    @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="illustration" aria-label="Coop County interactive egg tracker">
+      <div class="clock" aria-live="polite">
+        <div class="date" id="clockDate"></div>
+        <div class="time" id="clockTime"></div>
+        <div class="day-note" id="clockNote">Another good day ♥</div>
+      </div>
+
+      <div class="counter-value" id="lucyValue" aria-live="polite">0</div>
+      <div class="counter-value" id="totalValue" aria-live="polite">0</div>
+      <div class="counter-value" id="ethelValue" aria-live="polite">0</div>
+
+      <button class="count-btn minus lucy" type="button" data-counter="lucy" data-delta="-1" aria-label="Subtract one egg from Lucy"></button>
+      <button class="count-btn plus lucy" type="button" data-counter="lucy" data-delta="1" aria-label="Add one egg to Lucy"></button>
+      <button class="count-btn minus ethel" type="button" data-counter="ethel" data-delta="-1" aria-label="Subtract one egg from Ethel"></button>
+      <button class="count-btn plus ethel" type="button" data-counter="ethel" data-delta="1" aria-label="Add one egg to Ethel"></button>
+      <button class="hotspot log-btn" type="button" id="logGathering" aria-label="Log today's gathering"></button>
+
+      <button class="hotspot side-scratch" type="button" data-open="scratchModal" aria-label="Open Chicken Scratch to-do list"></button>
+      <button class="hotspot side-journal" type="button" data-open="journalModal" aria-label="Open Farm Journal"></button>
+      <button class="hotspot side-tools" type="button" data-open="toolsModal" aria-label="Open Tool Shed"></button>
+      <button class="hotspot overview-hotspot" type="button" data-open="overviewModal" aria-label="Open 30-day overview"></button>
+      <button class="hotspot recent-hotspot" type="button" data-open="journalModal" aria-label="Open recent journal entries"></button>
+      <button class="view-all" type="button" data-open="journalModal" aria-label="View all journal entries"></button>
+
+      <div class="metric-value" id="metricTotal">0</div>
+      <div class="metric-value" id="metricAverage">0</div>
+      <div class="metric-value" id="metricBest">0</div>
+      <div class="recent-lines" id="recentLines">No entries yet.</div>
+
+      <div class="capture-pair" aria-label="Capture tools">
+        <button class="capture-btn" id="micButton" type="button" aria-label="Speak Lucy and Ethel egg counts" title="Voice egg count">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path>
+          </svg>
+        </button>
+        <button class="capture-btn" id="cameraButton" type="button" aria-label="Take or choose a photo" title="Camera">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h4l1.4-2h5.2L16 7h4v12H4z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </button>
+        <input class="sr-only" id="cameraInput" type="file" accept="image/*" capture="environment">
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="scratchModal" role="dialog" aria-modal="true" aria-labelledby="scratchTitle">
+    <section class="modal">
+      <header><h2 id="scratchTitle">Chicken Scratch</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>
+      <p>Keep the little coop chores from wandering off. Add a task, check it when it is done, or edit it anytime.</p>
+      <form id="todoForm" class="scratch-add" autocomplete="off">
+        <label for="todoInput">What needs doing?</label>
+        <div class="scratch-add-row">
+          <input id="todoInput" type="text" maxlength="120" placeholder="Refill oyster shell, fix the latch…">
+          <button class="action primary" id="addTodo" type="submit">Add</button>
+        </div>
+      </form>
+      <div class="scratch-toolbar" aria-label="Chicken Scratch filters">
+        <div class="scratch-filters" role="group" aria-label="Show tasks">
+          <button class="action scratch-filter active" type="button" data-todo-filter="all" aria-pressed="true">All</button>
+          <button class="action scratch-filter" type="button" data-todo-filter="open" aria-pressed="false">To do</button>
+          <button class="action scratch-filter" type="button" data-todo-filter="done" aria-pressed="false">Done</button>
+        </div>
+        <button class="action" id="clearDone" type="button">Clear completed</button>
+      </div>
+      <p class="scratch-summary" id="todoSummary" aria-live="polite"></p>
+      <div class="list scratch-list" id="todoList"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="journalModal" role="dialog" aria-modal="true" aria-labelledby="journalTitle">
+    <section class="modal">
+      <header><h2 id="journalTitle">Farm Journal</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>
+      <p>Gatherings are recorded automatically. Add observations, memories, or anything worth keeping.</p>
+      <form id="journalForm" class="journal-form" autocomplete="off">
+        <input type="hidden" id="journalEditType" value="">
+        <input type="hidden" id="journalEditId" value="">
+        <div class="journal-form-grid">
+          <div><label for="journalDate">Date and time</label><input id="journalDate" type="datetime-local"></div>
+          <div><label for="journalPhotoInput">Photo</label><input id="journalPhotoInput" type="file" accept="image/*" capture="environment"></div>
+        </div>
+        <label for="journalText">Journal note</label>
+        <textarea id="journalText" maxlength="2000" placeholder="What happened around the coop today?"></textarea>
+        <div class="journal-photo-preview" id="journalPhotoPreview"><img id="journalPreviewImage" alt="Photo ready for this journal entry"><div class="actions"><button class="action" id="removeJournalPhoto" type="button">Remove photo</button></div></div>
+        <div class="actions">
+          <button class="action primary" id="saveJournal" type="submit">Save entry</button>
+          <button class="action" id="cancelJournalEdit" type="button" hidden>Cancel edit</button>
+        </div>
+      </form>
+      <div class="list" id="journalList"></div>
+    </section>
+  </div>
+
+  <div class="photo-lightbox" id="photoLightbox" role="dialog" aria-modal="true" aria-label="Journal photo">
+    <button class="close" id="closeLightbox" type="button" aria-label="Close photo">×</button>
+    <img id="lightboxImage" alt="Journal photo enlarged">
+  </div>
+
+  <div class="modal-backdrop" id="toolsModal" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
+    <section class="modal">
+      <header><h2 id="toolsTitle">Tool Shed</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>
+      <p>Your Coop County control center for backups, exports, resets, and app status.</p>
+
+      <section class="tool-section" aria-labelledby="backupHeading">
+        <h3 id="backupHeading">Backup &amp; Restore</h3>
+        <p>Save one complete backup containing egg history, Farm Journal, Chicken Scratch, current counts, and photos.</p>
+        <div class="tool-grid">
+          <button class="action primary" id="exportBackup" type="button">Download full backup</button>
+          <button class="action" id="restoreBackup" type="button">Restore a backup</button>
+        </div>
+        <input class="tool-file" id="restoreInput" type="file" accept="application/json,.json">
+      </section>
+
+      <section class="tool-section" aria-labelledby="exportHeading">
+        <h3 id="exportHeading">CSV Exports</h3>
+        <p>Open these files in Excel, Google Sheets, or another spreadsheet program.</p>
+        <div class="tool-grid">
+          <button class="action" id="exportCsv" type="button">Egg history CSV</button>
+          <button class="action" id="exportJournalCsv" type="button">Farm Journal CSV</button>
+          <button class="action" id="exportScratchCsv" type="button">Chicken Scratch CSV</button>
+        </div>
+      </section>
+
+      <section class="tool-section" aria-labelledby="resetHeading">
+        <h3 id="resetHeading">Reset Options</h3>
+        <p>Each reset asks for confirmation before anything is removed.</p>
+        <div class="tool-grid">
+          <button class="action" id="resetCurrent" type="button">Reset current counts</button>
+          <button class="action" id="resetScratch" type="button">Clear Chicken Scratch</button>
+          <button class="action" id="resetJournal" type="button">Clear Farm Journal</button>
+          <button class="action danger" id="clearAll" type="button">Factory reset all data</button>
+        </div>
+      </section>
+
+      <section class="tool-section" aria-labelledby="connectionsHeading">
+        <h3 id="connectionsHeading">Connections</h3>
+        <p>Useful links stay tucked inside the Tool Shed and never clutter the main farm screen.</p>
+        <div class="tool-grid">
+          <button class="action" id="openSocialLinks" type="button">Social Links</button>
+          <button class="action" id="openWeatherLink" type="button">Weather Link</button>
+        </div>
+      </section>
+
+      <section class="tool-section" aria-labelledby="statusHeading">
+        <h3 id="statusHeading">App &amp; Data Status</h3>
+        <div class="tool-stats">
+          <div class="tool-stat"><strong id="toolGatherings">0</strong><span>Gatherings</span></div>
+          <div class="tool-stat"><strong id="toolJournal">0</strong><span>Journal notes</span></div>
+          <div class="tool-stat"><strong id="toolTasks">0</strong><span>Scratch tasks</span></div>
+          <div class="tool-stat"><strong id="toolStorage">0 KB</strong><span>Local storage used</span></div>
+        </div>
+        <div class="status-line"><span>Version <strong id="appVersion">Phase 2 · Item 5</strong></span><span class="status-pill"><span class="status-dot" id="connectionDot"></span><span id="connectionText">Checking…</span></span></div>
+        <div class="actions"><button class="action success" id="checkUpdate" type="button">Check for app update</button></div>
+      </section>
+      <p class="device-note" id="deviceNote"></p>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="socialModal" role="dialog" aria-modal="true" aria-labelledby="socialTitle">
+    <section class="modal">
+      <header><h2 id="socialTitle">Social Links</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>
+      <p class="submodal-note">Add any site, its link, and private notes. Coop County only stores and opens the links you choose.</p>
+      <form id="socialForm" class="journal-form" autocomplete="off">
+        <input type="hidden" id="socialEditId" value="">
+        <label for="socialName">Site or connection name</label>
+        <input id="socialName" type="text" maxlength="100" placeholder="Facebook, farm website, YouTube…" required>
+        <label for="socialUrl">Link</label>
+        <input id="socialUrl" type="text" inputmode="url" maxlength="1000" placeholder="https://…" required>
+        <label for="socialNotes">Notes (optional)</label>
+        <textarea id="socialNotes" maxlength="1000" placeholder="Login reminder, posting notes, contact details…"></textarea>
+        <div class="actions"><button class="action primary" id="saveSocial" type="submit">Save link</button><button class="action" id="cancelSocialEdit" type="button" hidden>Cancel edit</button></div>
+      </form>
+      <div class="utility-link-list" id="socialList"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="weatherModal" role="dialog" aria-modal="true" aria-labelledby="weatherTitle">
+    <section class="modal">
+      <header><h2 id="weatherTitle">Weather Link</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>
+      <p class="submodal-note">Choose any local weather website. Coop County opens it; the weather service supplies the forecast.</p>
+      <form id="weatherForm" class="journal-form" autocomplete="off">
+        <label for="weatherUrl">Preferred local weather link</label>
+        <input id="weatherUrl" type="text" inputmode="url" maxlength="1000" placeholder="https://weather.gov/…">
+        <div class="actions"><button class="action primary" type="submit">Save weather link</button><button class="action success" id="launchWeather" type="button">Open weather</button><button class="action" id="clearWeather" type="button">Clear</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="overviewModal" role="dialog" aria-modal="true" aria-labelledby="overviewTitle">
+    <section class="modal">
+      <header><h2 id="overviewTitle">30-Day Overview</h2><button class="close" type="button" data-close aria-label="Close">×</button></header>
+      <div id="overviewDetails"></div>
+    </section>
+  </div>
+
+  <div class="status" id="status" aria-live="polite"></div>
+
+  <script>
+  (()=>{
+    'use strict';
+    const KEY='coopCountyInteractiveIllustrationV1';
+    const fresh={lucy:0,ethel:0,gatherings:[],todos:[],journal:[],socialLinks:[],weatherUrl:'',pendingPhoto:null};
+    let state=load();
+    state.todos=Array.isArray(state.todos)?state.todos.map((todo,index)=>({id:todo.id||`scratch-${Date.now()}-${index}`,text:String(todo.text||'').trim(),done:Boolean(todo.done),createdAt:todo.createdAt||new Date().toISOString()})).filter(todo=>todo.text):[];
+    state.gatherings=Array.isArray(state.gatherings)?state.gatherings.map((g,index)=>({...g,id:g.id||`gathering-${new Date(g.time||Date.now()).getTime()}-${index}`})):[];
+    state.journal=Array.isArray(state.journal)?state.journal.map((j,index)=>({...j,id:j.id||`journal-${new Date(j.time||Date.now()).getTime()}-${index}`})):[];
+    state.socialLinks=Array.isArray(state.socialLinks)?state.socialLinks.map((link,index)=>({id:link.id||`social-${Date.now()}-${index}`,name:String(link.name||'').trim(),url:String(link.url||'').trim(),notes:String(link.notes||'')})).filter(link=>link.name&&link.url):[];
+    state.weatherUrl=String(state.weatherUrl||'');
+    let todoFilter='all';
+    let journalDraftPhoto=null;
+    const $=id=>document.getElementById(id);
+    const escapeHtml=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+    const safeUrl=value=>{const raw=String(value||'').trim();if(!raw)return '';try{const url=new URL(/^https?:\/\//i.test(raw)?raw:`https://${raw}`);return /^https?:$/.test(url.protocol)?url.href:''}catch{return ''}};
+
+    function load(){try{return {...fresh,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{return {...fresh}}}
+    function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch{showStatus('Storage is full. Export the log, then remove older photos.')}}
+
+    function detectDevice(){
+      const ua=navigator.userAgent||'';const platform=navigator.platform||'';let os='Other';let key='other';
+      if(/iPad|iPhone|iPod/.test(ua)||(platform==='MacIntel'&&navigator.maxTouchPoints>1)){os='iOS / iPadOS';key='ios'}
+      else if(/Android/i.test(ua)){os='Android';key='android'}
+      else if(/Windows/i.test(ua)){os='Windows';key='windows'}
+      else if(/Mac/i.test(platform)){os='macOS';key='mac'}
+      document.documentElement.dataset.os=key;
+      document.documentElement.dataset.orientation=matchMedia('(orientation:portrait)').matches?'portrait':'landscape';
+      $('deviceNote').textContent=`Detected: ${os} · ${document.documentElement.dataset.orientation}. Layout and safe areas adapt automatically.`;
+    }
+    detectDevice();addEventListener('resize',detectDevice);addEventListener('orientationchange',()=>setTimeout(detectDevice,150));
+
+    function updateClock(){
+      const d=new Date();
+      $('clockDate').textContent=new Intl.DateTimeFormat(undefined,{month:'long',day:'numeric',year:'numeric'}).format(d);
+      $('clockTime').textContent=new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(d);
+      $('clockNote').textContent=new Intl.DateTimeFormat(undefined,{weekday:'long'}).format(d)+' ♥';
+    }
+    updateClock();setInterval(updateClock,1000);
+
+    function formatDate(iso){return new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(iso))}
+    function showStatus(text){const s=$('status');s.textContent=text;s.classList.add('show');clearTimeout(showStatus.t);showStatus.t=setTimeout(()=>s.classList.remove('show'),3300)}
+
+    function render(){
+      $('lucyValue').textContent=state.lucy;
+      $('ethelValue').textContent=state.ethel;
+      $('totalValue').textContent=state.lucy+state.ethel;
+
+      const cutoff=Date.now()-30*86400000;
+      const g30=state.gatherings.filter(g=>new Date(g.time).getTime()>=cutoff);
+      const total=g30.reduce((sum,g)=>sum+g.total,0);
+      const avg=g30.length?(total/g30.length).toFixed(1):'0';
+      const best=g30.length?Math.max(...g30.map(g=>g.total)):0;
+      $('metricTotal').textContent=total;
+      $('metricAverage').textContent=avg;
+      $('metricBest').textContent=best;
+
+      const combined=[
+        ...state.gatherings.map(g=>({id:g.id,time:g.time,text:`Lucy ${g.lucy}, Ethel ${g.ethel} — ${g.total} eggs${g.note?`\n${g.note}`:''}`,photo:g.photo,type:'gathering',lucy:g.lucy,ethel:g.ethel,total:g.total,note:g.note||''})),
+        ...state.journal.map(j=>({...j,type:'note'}))
+      ].sort((a,b)=>new Date(b.time)-new Date(a.time));
+      $('recentLines').innerHTML=combined.length?combined.slice(0,2).map(e=>`${escapeHtml(new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(new Date(e.time)))} — ${escapeHtml(e.text)}`).join('<br>'):'No entries yet.';
+
+      const openTodos=state.todos.filter(todo=>!todo.done).length;
+      const doneTodos=state.todos.length-openTodos;
+      $('todoSummary').textContent=state.todos.length?`${openTodos} to do · ${doneTodos} finished`:'Your scratch list is clear.';
+      document.querySelectorAll('[data-todo-filter]').forEach(button=>{
+        const active=button.dataset.todoFilter===todoFilter;
+        button.classList.toggle('active',active);
+        button.setAttribute('aria-pressed',String(active));
+      });
+      $('clearDone').disabled=doneTodos===0;
+      $('todoList').innerHTML='';
+      const visibleTodos=state.todos.filter(todo=>todoFilter==='all'||(todoFilter==='done'?todo.done:!todo.done));
+      visibleTodos.forEach(todo=>{
+        const row=document.createElement('div');row.className='list-item'+(todo.done?' done':'');
+        const check=document.createElement('input');check.type='checkbox';check.className='scratch-check';check.checked=todo.done;check.setAttribute('aria-label',`${todo.done?'Mark not done':'Mark completed'}: ${todo.text}`);
+        check.addEventListener('change',()=>{todo.done=check.checked;save();render()});
+        const text=document.createElement('div');text.className='item-text';text.textContent=todo.text;
+        const actions=document.createElement('div');actions.className='scratch-actions';
+        const edit=document.createElement('button');edit.className='action';edit.type='button';edit.textContent='Edit';
+        edit.addEventListener('click',()=>{const next=prompt('Edit this Chicken Scratch item:',todo.text);if(next===null)return;const clean=next.trim().slice(0,120);if(!clean){showStatus('The task was left unchanged.');return}todo.text=clean;save();render();showStatus('Chicken Scratch updated.');});
+        const remove=document.createElement('button');remove.className='action';remove.type='button';remove.textContent='Remove';
+        remove.addEventListener('click',()=>{state.todos=state.todos.filter(item=>item.id!==todo.id);save();render();showStatus('Task removed.');});
+        actions.append(edit,remove);row.append(check,text,actions);$('todoList').append(row);
+      });
+      if(!visibleTodos.length){
+        const message=todoFilter==='done'?'Nothing completed yet.':todoFilter==='open'?'No chores waiting.':'No chores on the list.';
+        $('todoList').innerHTML=`<div class="scratch-empty">${message}</div>`;
+      }
+
+      $('journalList').innerHTML='';
+      combined.forEach(e=>{
+        const article=document.createElement('article');article.className='entry';
+        const head=document.createElement('div');head.className='journal-entry-head';
+        const when=document.createElement('time');when.textContent=formatDate(e.time);
+        const badge=document.createElement('span');badge.className='journal-badge';badge.textContent=e.type==='gathering'?'Gathering':'Journal note';
+        head.append(when,badge);
+        const text=document.createElement('div');text.textContent=e.text;
+        article.append(head,text);
+        if(e.photo){const photoButton=document.createElement('button');photoButton.type='button';photoButton.className='journal-entry-photo';photoButton.setAttribute('aria-label','View attached photo');const img=document.createElement('img');img.src=e.photo;img.alt='Photo attached to journal entry';photoButton.append(img);photoButton.addEventListener('click',()=>openLightbox(e.photo));article.append(photoButton)}
+        const actions=document.createElement('div');actions.className='journal-entry-actions';
+        const edit=document.createElement('button');edit.type='button';edit.className='action';edit.textContent='Edit';edit.addEventListener('click',()=>beginJournalEdit(e));
+        const remove=document.createElement('button');remove.type='button';remove.className='action';remove.textContent='Delete';remove.addEventListener('click',()=>deleteJournalEntry(e));
+        actions.append(edit,remove);article.append(actions);$('journalList').append(article);
+      });
+      if(!combined.length)$('journalList').innerHTML='<div class="journal-empty">No journal entries yet.</div>';
+
+      $('toolGatherings').textContent=state.gatherings.length;
+      $('toolJournal').textContent=state.journal.length;
+      $('toolTasks').textContent=state.todos.length;
+      const storageBytes=new Blob([localStorage.getItem(KEY)||'']).size;
+      $('toolStorage').textContent=storageBytes<1024?`${storageBytes} B`:`${(storageBytes/1024).toFixed(storageBytes>10240?0:1)} KB`;
+      updateConnectionStatus();
+
+      const dayMs=86400000;
+      const todayStart=new Date();todayStart.setHours(0,0,0,0);
+      const windowStart=new Date(todayStart);windowStart.setDate(windowStart.getDate()-29);
+      const windowEnd=new Date(todayStart);windowEnd.setDate(windowEnd.getDate()+1);
+      const rolling30=state.gatherings.filter(g=>{const t=new Date(g.time);return t>=windowStart&&t<windowEnd});
+      const daily30=[];
+      for(let i=0;i<30;i++){
+        const d=new Date(windowStart);d.setDate(d.getDate()+i);
+        const next=new Date(d);next.setDate(next.getDate()+1);
+        const entries=rolling30.filter(g=>{const t=new Date(g.time);return t>=d&&t<next});
+        daily30.push({date:d,entries,total:entries.reduce((n,g)=>n+Number(g.total||0),0),lucy:entries.reduce((n,g)=>n+Number(g.lucy||0),0),ethel:entries.reduce((n,g)=>n+Number(g.ethel||0),0)});
+      }
+      const rollingTotal=daily30.reduce((n,d)=>n+d.total,0);
+      const activeDays=daily30.filter(d=>d.total>0).length;
+      const quietDays=30-activeDays;
+      const calendarAverage=(rollingTotal/30).toFixed(1);
+      const activeAverage=activeDays?(rollingTotal/activeDays).toFixed(1):'0';
+      const bestDay=daily30.reduce((best,d)=>d.total>best.total?d:best,{date:null,total:0});
+      const bestDate=bestDay.date?new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(bestDay.date):'—';
+      const lucy30=daily30.reduce((n,d)=>n+d.lucy,0),ethel30=daily30.reduce((n,d)=>n+d.ethel,0);
+      const splitTotal=Math.max(1,lucy30+ethel30),lucyPct=Math.round(lucy30/splitTotal*100),ethelPct=100-lucyPct;
+      const topCoop=lucy30===ethel30?'Tied':lucy30>ethel30?'Lucy':'Ethel';
+      const last7=daily30.slice(-7).reduce((n,d)=>n+d.total,0),prior7=daily30.slice(-14,-7).reduce((n,d)=>n+d.total,0);
+      const change=prior7?((last7-prior7)/prior7*100):null;
+      const trend=change===null?(last7?'A first 7-day baseline is forming.':'Log gatherings to begin a trend.'):(change>1?`Up ${Math.abs(change).toFixed(0)}% from the prior 7 days.`:change<-1?`Down ${Math.abs(change).toFixed(0)}% from the prior 7 days.`:'Holding steady with the prior 7 days.');
+      const maxDaily=Math.max(1,...daily30.map(d=>d.total));
+      const firstWeekday=windowStart.getDay();
+      const calendarBlanks=Array.from({length:firstWeekday},()=>'<div class="calendar-day outside" aria-hidden="true"></div>').join('');
+      const weekdayLabels=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="calendar-weekday">${d}</div>`).join('');
+      const calendarDays=daily30.map(day=>{
+        const alpha=(.08+(day.total/maxDaily)*.42).toFixed(2);
+        const isToday=day.date.getTime()===todayStart.getTime();
+        const label=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'long',day:'numeric'}).format(day.date);
+        return `<div class="calendar-day${isToday?' today':''}" style="--day-alpha:${alpha}" aria-label="${escapeHtml(label)}: ${day.total} eggs"><span class="calendar-date">${new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(day.date)}</span><span class="calendar-eggs">${day.total}<small>${day.total===1?'egg':'eggs'}</small></span></div>`;
+      }).join('');
+      const recentRows=[...rolling30].sort((a,b)=>new Date(b.time)-new Date(a.time)).slice(0,10).map(g=>`<div class="overview-history-row"><div><strong>Lucy ${Number(g.lucy||0)} · Ethel ${Number(g.ethel||0)}</strong><time>${escapeHtml(formatDate(g.time))}</time></div><span class="overview-history-count">${Number(g.total||0)} eggs</span></div>`).join('');
+      $('overviewDetails').innerHTML=`
+        <p class="overview-intro">A complete rolling look at the last 30 calendar days, ending today.</p>
+        <div class="production-summary">
+          <div class="production-stat"><strong>${rollingTotal}</strong><span>Total eggs</span></div>
+          <div class="production-stat"><strong>${calendarAverage}</strong><span>Average per calendar day</span></div>
+          <div class="production-stat"><strong>${activeAverage}</strong><span>Average per gathering day</span></div>
+          <div class="production-stat"><strong>${bestDay.total}</strong><span>Best day · ${escapeHtml(bestDate)}</span></div>
+          <div class="production-stat"><strong>${activeDays}</strong><span>Days with production</span></div>
+          <div class="production-stat"><strong>${quietDays}</strong><span>Days without entries</span></div>
+        </div>
+        <div class="trend-line"><strong>7-day trend:</strong> ${escapeHtml(trend)}</div>
+        <section class="overview-section"><h3>Lucy &amp; Ethel</h3><div class="overview-split"><div class="coop-total"><strong>${lucy30}</strong><span>Lucy · ${lucyPct}% of recorded eggs</span></div><div class="coop-total"><strong>${ethel30}</strong><span>Ethel · ${ethelPct}% of recorded eggs</span></div></div><div class="split-track" aria-label="Lucy ${lucyPct} percent and Ethel ${ethelPct} percent"><span class="split-lucy" style="width:${lucyPct}%"></span><span class="split-ethel" style="width:${ethelPct}%"></span></div><p class="submodal-note">Highest-producing coop: <strong>${escapeHtml(topCoop)}</strong></p></section>
+        <section class="overview-section"><h3>30-Day Calendar</h3><div class="calendar-grid">${weekdayLabels}${calendarBlanks}${calendarDays}</div></section>
+        <section class="overview-section"><h3>Recent Gatherings</h3><div class="overview-history">${recentRows||'<div class="scratch-empty">No gatherings recorded in this 30-day window.</div>'}</div></section>
+        <p class="submodal-note">${rolling30.length} gathering${rolling30.length===1?'':'s'} recorded during this rolling 30-day window.</p>`;
+      renderSocialLinks();
+      $('weatherUrl').value=state.weatherUrl||'';
+    }
+
+    document.querySelectorAll('[data-counter]').forEach(btn=>btn.addEventListener('click',()=>{
+      const key=btn.dataset.counter;state[key]=Math.max(0,state[key]+Number(btn.dataset.delta));save();render();
+    }));
+
+    $('logGathering').addEventListener('click',()=>{
+      const total=state.lucy+state.ethel;
+      if(!total){showStatus('Add Lucy and Ethel counts first.');return}
+      const entry={id:`gathering-${Date.now()}-${Math.random().toString(16).slice(2)}`,time:new Date().toISOString(),lucy:state.lucy,ethel:state.ethel,total,photo:state.pendingPhoto||null};
+      state.gatherings.push(entry);state.pendingPhoto=null;save();render();showStatus(`Gathering logged: ${total} eggs.`);
+    });
+
+    function addTodo(){
+      const input=$('todoInput');const text=input.value.trim().slice(0,120);
+      if(!text){showStatus('Write down a chore first.');input.focus();return}
+      state.todos.push({id:`scratch-${Date.now()}-${Math.random().toString(16).slice(2)}`,text,done:false,createdAt:new Date().toISOString()});
+      input.value='';todoFilter='all';save();render();input.focus();showStatus('Added to Chicken Scratch.');
+    }
+    $('todoForm').addEventListener('submit',event=>{event.preventDefault();addTodo()});
+    document.querySelectorAll('[data-todo-filter]').forEach(button=>button.addEventListener('click',()=>{todoFilter=button.dataset.todoFilter;render()}));
+    $('clearDone').addEventListener('click',()=>{
+      const count=state.todos.filter(todo=>todo.done).length;if(!count)return;
+      if(!confirm(`Clear ${count} completed ${count===1?'task':'tasks'}?`))return;
+      state.todos=state.todos.filter(todo=>!todo.done);save();render();showStatus('Completed chores cleared.');
+    });
+
+    function toLocalInputValue(iso){const d=new Date(iso||Date.now());const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
+    function resetJournalForm(){
+      $('journalForm').reset();$('journalDate').value=toLocalInputValue();$('journalEditType').value='';$('journalEditId').value='';journalDraftPhoto=null;
+      $('journalPhotoPreview').classList.remove('show');$('journalPreviewImage').removeAttribute('src');$('saveJournal').textContent='Save entry';$('cancelJournalEdit').hidden=true;
+    }
+    function beginJournalEdit(entry){
+      $('journalEditType').value=entry.type;$('journalEditId').value=entry.id;$('journalDate').value=toLocalInputValue(entry.time);
+      $('journalText').value=entry.type==='gathering'?(entry.note||''):entry.text;journalDraftPhoto=entry.photo||null;
+      if(journalDraftPhoto){$('journalPreviewImage').src=journalDraftPhoto;$('journalPhotoPreview').classList.add('show')}else{$('journalPhotoPreview').classList.remove('show');$('journalPreviewImage').removeAttribute('src')}
+      $('saveJournal').textContent='Save changes';$('cancelJournalEdit').hidden=false;$('journalText').focus();
+    }
+    function deleteJournalEntry(entry){
+      if(!confirm(`Delete this ${entry.type==='gathering'?'gathering':'journal entry'}?`))return;
+      if(entry.type==='gathering')state.gatherings=state.gatherings.filter(item=>item.id!==entry.id);else state.journal=state.journal.filter(item=>item.id!==entry.id);
+      save();render();resetJournalForm();showStatus('Journal entry deleted.');
+    }
+    function openLightbox(src){$('lightboxImage').src=src;$('photoLightbox').classList.add('open');$('closeLightbox').focus()}
+    function closeLightbox(){$('photoLightbox').classList.remove('open');$('lightboxImage').removeAttribute('src')}
+    $('journalForm').addEventListener('submit',event=>{
+      event.preventDefault();const text=$('journalText').value.trim();const type=$('journalEditType').value;const id=$('journalEditId').value;const selected=$('journalDate').value;
+      const time=selected?new Date(selected).toISOString():new Date().toISOString();
+      if(type==='gathering'){
+        const entry=state.gatherings.find(item=>item.id===id);if(!entry)return;
+        entry.time=time;entry.note=text;entry.photo=journalDraftPhoto||null;
+      }else if(type==='note'){
+        const entry=state.journal.find(item=>item.id===id);if(!entry)return;
+        if(!text){showStatus('Write a journal note first.');return}entry.time=time;entry.text=text;entry.photo=journalDraftPhoto||null;
+      }else{
+        if(!text){showStatus('Write a journal note first.');return}
+        state.journal.push({id:`journal-${Date.now()}-${Math.random().toString(16).slice(2)}`,time,text,photo:journalDraftPhoto||state.pendingPhoto||null});state.pendingPhoto=null;
+      }
+      save();render();resetJournalForm();showStatus(type?'Journal entry updated.':'Journal entry saved.');
+    });
+    $('cancelJournalEdit').addEventListener('click',()=>{resetJournalForm();showStatus('Edit canceled.')});
+    $('journalPhotoInput').addEventListener('change',event=>{const file=event.target.files?.[0];if(!file)return;preparePhoto(file,photo=>{journalDraftPhoto=photo;$('journalPreviewImage').src=photo;$('journalPhotoPreview').classList.add('show');showStatus('Photo added to this journal entry.')});event.target.value=''});
+    $('removeJournalPhoto').addEventListener('click',()=>{journalDraftPhoto=null;$('journalPhotoPreview').classList.remove('show');$('journalPreviewImage').removeAttribute('src');showStatus('Photo removed from this entry.')});
+    $('closeLightbox').addEventListener('click',closeLightbox);$('photoLightbox').addEventListener('click',event=>{if(event.target===$('photoLightbox'))closeLightbox()});
+
+    function preparePhoto(file,done){const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const max=1280,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);done(canvas.toDataURL('image/jpeg',.78))};img.src=reader.result};reader.readAsDataURL(file)}
+    $('cameraButton').addEventListener('click',()=>$('cameraInput').click());
+    $('cameraInput').addEventListener('change',event=>{const file=event.target.files?.[0];if(!file)return;preparePhoto(file,photo=>{state.pendingPhoto=photo;save();showStatus('Photo ready for the next gathering or journal entry.')});event.target.value=''});
+
+    function wordNumber(value){
+      if(/^\d+$/.test(value.trim()))return Number(value);
+      const ones={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19};
+      const tens={twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+      return value.toLowerCase().replace(/-/g,' ').split(/\s+/).reduce((n,w)=>n+(ones[w]??tens[w]??0),0);
+    }
+    function namedCount(text,name){const m=text.match(new RegExp(`${name}(?:\\s+(?:has|is|got))?\\s+([a-z-]+(?:\\s+[a-z-]+)?|\\d+)`,'i'));return m?wordNumber(m[1]):null}
+    const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+    $('micButton').addEventListener('click',()=>{
+      if(!SpeechRecognition){showStatus('Voice entry is not supported in this browser. Manual buttons still work.');return}
+      const recognition=new SpeechRecognition();recognition.lang=navigator.language||'en-US';recognition.interimResults=false;recognition.maxAlternatives=1;
+      $('micButton').classList.add('listening');showStatus('Listening… say “Lucy 4, Ethel 7.”');
+      recognition.onresult=e=>{const heard=e.results[0][0].transcript;const lucy=namedCount(heard,'lucy');const ethel=namedCount(heard,'ethel');
+        if(lucy===null&&ethel===null){showStatus(`I heard “${heard}” but not the counts.`);return}
+        if(lucy!==null)state.lucy=Math.max(0,lucy);if(ethel!==null)state.ethel=Math.max(0,ethel);save();render();showStatus(`Heard: ${heard}`)};
+      recognition.onerror=e=>showStatus(e.error==='not-allowed'?'Microphone permission is blocked in browser settings.':`Microphone error: ${e.error}`);
+      recognition.onend=()=>$('micButton').classList.remove('listening');recognition.start();
+    });
+
+    function csvCell(value){return `"${String(value??'').replace(/"/g,'""')}"`}
+    function downloadFile(name,contents,type){
+      const url=URL.createObjectURL(new Blob([contents],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+    function dateStamp(){const d=new Date();const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+    function updateConnectionStatus(){
+      const online=navigator.onLine;$('connectionDot').classList.toggle('online',online);$('connectionText').textContent=online?'Online':'Offline';
+    }
+    addEventListener('online',()=>{updateConnectionStatus();showStatus('Back online.')});
+    addEventListener('offline',()=>{updateConnectionStatus();showStatus('Offline mode active.')});
+
+    function resetSocialForm(){
+      $('socialForm').reset();$('socialEditId').value='';$('saveSocial').textContent='Save link';$('cancelSocialEdit').hidden=true;
+    }
+    function renderSocialLinks(){
+      const list=$('socialList');if(!list)return;list.innerHTML='';
+      if(!state.socialLinks.length){list.innerHTML='<div class="scratch-empty">No social or connection links saved yet.</div>';return}
+      state.socialLinks.forEach(link=>{
+        const card=document.createElement('article');card.className='utility-link-card';
+        const name=document.createElement('strong');name.textContent=link.name;
+        const anchor=document.createElement('a');anchor.href=safeUrl(link.url)||'#';anchor.target='_blank';anchor.rel='noopener noreferrer';anchor.textContent=link.url;
+        card.append(name,anchor);
+        if(link.notes){const notes=document.createElement('p');notes.textContent=link.notes;card.append(notes)}
+        const actions=document.createElement('div');actions.className='utility-link-actions';
+        const open=document.createElement('button');open.type='button';open.className='action success';open.textContent='Open';open.addEventListener('click',()=>{const url=safeUrl(link.url);if(url)window.open(url,'_blank','noopener');else showStatus('That link is not valid.');});
+        const edit=document.createElement('button');edit.type='button';edit.className='action';edit.textContent='Edit';edit.addEventListener('click',()=>{$('socialEditId').value=link.id;$('socialName').value=link.name;$('socialUrl').value=link.url;$('socialNotes').value=link.notes||'';$('saveSocial').textContent='Save changes';$('cancelSocialEdit').hidden=false;$('socialName').focus();});
+        const remove=document.createElement('button');remove.type='button';remove.className='action danger';remove.textContent='Delete';remove.addEventListener('click',()=>{if(!confirm(`Delete ${link.name}?`))return;state.socialLinks=state.socialLinks.filter(item=>item.id!==link.id);save();render();showStatus('Social link deleted.');});
+        actions.append(open,edit,remove);card.append(actions);list.append(card);
+      });
+    }
+    $('socialForm').addEventListener('submit',event=>{event.preventDefault();const name=$('socialName').value.trim().slice(0,100);const url=safeUrl($('socialUrl').value);const notes=$('socialNotes').value.trim().slice(0,1000);if(!name||!url){showStatus('Add a site name and a valid link.');return}const id=$('socialEditId').value;if(id){const link=state.socialLinks.find(item=>item.id===id);if(link)Object.assign(link,{name,url,notes});}else state.socialLinks.push({id:`social-${Date.now()}-${Math.random().toString(16).slice(2)}`,name,url,notes});save();resetSocialForm();render();showStatus(id?'Social link updated.':'Social link saved.');});
+    $('cancelSocialEdit').addEventListener('click',resetSocialForm);
+    $('openSocialLinks').addEventListener('click',()=>{closeModal($('toolsModal'));resetSocialForm();renderSocialLinks();openModal('socialModal')});
+    $('openWeatherLink').addEventListener('click',()=>{closeModal($('toolsModal'));$('weatherUrl').value=state.weatherUrl||'';openModal('weatherModal')});
+    $('weatherForm').addEventListener('submit',event=>{event.preventDefault();const raw=$('weatherUrl').value.trim();const url=raw?safeUrl(raw):'';if(raw&&!url){showStatus('Enter a valid weather website link.');return}state.weatherUrl=url;save();render();showStatus(url?'Weather link saved.':'Weather link cleared.');});
+    $('launchWeather').addEventListener('click',()=>{const url=safeUrl($('weatherUrl').value||state.weatherUrl);if(!url){showStatus('Save a local weather link first.');return}window.open(url,'_blank','noopener');});
+    $('clearWeather').addEventListener('click',()=>{state.weatherUrl='';$('weatherUrl').value='';save();render();showStatus('Weather link cleared.');});
+
+    $('exportBackup').addEventListener('click',()=>{
+      const backup={app:'Coop County',formatVersion:1,appVersion:'Phase 2 Item 5',exportedAt:new Date().toISOString(),storageKey:KEY,data:state};
+      downloadFile(`coop-county-backup-${dateStamp()}.json`,JSON.stringify(backup,null,2),'application/json');showStatus('Full Coop County backup downloaded.');
+    });
+    $('restoreBackup').addEventListener('click',()=>$('restoreInput').click());
+    $('restoreInput').addEventListener('change',event=>{
+      const file=event.target.files?.[0];event.target.value='';if(!file)return;
+      const reader=new FileReader();reader.onload=()=>{
+        try{
+          const parsed=JSON.parse(reader.result);const data=parsed?.data??parsed;
+          if(!data||typeof data!=='object'||!Array.isArray(data.gatherings)||!Array.isArray(data.todos)||!Array.isArray(data.journal)||!Number.isFinite(Number(data.lucy))||!Number.isFinite(Number(data.ethel)))throw new Error('invalid');
+          if(!confirm('Restore this backup? It will replace all data currently saved in Coop County.'))return;
+          state={...fresh,...data,lucy:Math.max(0,Number(data.lucy)||0),ethel:Math.max(0,Number(data.ethel)||0)};
+          state.gatherings=Array.isArray(state.gatherings)?state.gatherings:[];state.todos=Array.isArray(state.todos)?state.todos:[];state.journal=Array.isArray(state.journal)?state.journal:[];
+          save();resetJournalForm();resetSocialForm();render();showStatus('Backup restored successfully.');
+        }catch{showStatus('That file is not a valid Coop County backup.');}
+      };reader.onerror=()=>showStatus('The backup file could not be read.');reader.readAsText(file);
+    });
+
+    $('exportCsv').addEventListener('click',()=>{
+      const rows=[['Date and time','Lucy','Ethel','Total','Note'],...state.gatherings.map(g=>[formatDate(g.time),g.lucy,g.ethel,g.total,g.note||''])];
+      downloadFile(`coop-county-egg-history-${dateStamp()}.csv`,rows.map(r=>r.map(csvCell).join(',')).join('\n'),'text/csv;charset=utf-8');showStatus('Egg history CSV downloaded.');
+    });
+    $('exportJournalCsv').addEventListener('click',()=>{
+      const rows=[['Type','Date and time','Lucy','Ethel','Total','Note','Has photo'],
+        ...state.gatherings.map(g=>['Gathering',formatDate(g.time),g.lucy,g.ethel,g.total,g.note||'',g.photo?'Yes':'No']),
+        ...state.journal.map(j=>['Journal note',formatDate(j.time),'','','',j.text||'',j.photo?'Yes':'No'])];
+      rows.splice(1,rows.length-1,...rows.slice(1).sort((a,b)=>new Date(b[1])-new Date(a[1])));
+      downloadFile(`coop-county-farm-journal-${dateStamp()}.csv`,rows.map(r=>r.map(csvCell).join(',')).join('\n'),'text/csv;charset=utf-8');showStatus('Farm Journal CSV downloaded.');
+    });
+    $('exportScratchCsv').addEventListener('click',()=>{
+      const rows=[['Task','Status','Created'],...state.todos.map(t=>[t.text,t.done?'Done':'To do',t.createdAt?formatDate(t.createdAt):''])];
+      downloadFile(`coop-county-chicken-scratch-${dateStamp()}.csv`,rows.map(r=>r.map(csvCell).join(',')).join('\n'),'text/csv;charset=utf-8');showStatus('Chicken Scratch CSV downloaded.');
+    });
+
+    $('resetCurrent').addEventListener('click',()=>{if(!confirm('Reset the current Lucy and Ethel counts to zero?'))return;state.lucy=0;state.ethel=0;save();render();showStatus('Current counts reset.');});
+    $('resetScratch').addEventListener('click',()=>{if(!state.todos.length){showStatus('Chicken Scratch is already empty.');return}if(!confirm(`Clear all ${state.todos.length} Chicken Scratch tasks?`))return;state.todos=[];save();render();showStatus('Chicken Scratch cleared.');});
+    $('resetJournal').addEventListener('click',()=>{const count=state.gatherings.length+state.journal.length;if(!count){showStatus('Farm Journal is already empty.');return}if(!confirm(`Delete all ${count} Farm Journal entries, including gathering history and attached photos?`))return;state.gatherings=[];state.journal=[];state.pendingPhoto=null;save();resetJournalForm();resetSocialForm();render();showStatus('Farm Journal cleared.');});
+    $('clearAll').addEventListener('click',()=>{if(!confirm('Factory reset Coop County? This removes all counts, gathering history, journal entries, Chicken Scratch tasks, saved links, and photos.'))return;if(!confirm('This cannot be undone unless you have a backup. Continue with factory reset?'))return;state={...fresh};save();resetJournalForm();resetSocialForm();render();showStatus('Coop County factory reset complete.');});
+    $('checkUpdate').addEventListener('click',async()=>{
+      if(!('serviceWorker' in navigator)){showStatus('App update checking is not supported in this browser.');return}
+      try{const registration=await navigator.serviceWorker.getRegistration();if(!registration){showStatus('No installed app worker was found. Reload once while online.');return}await registration.update();showStatus('Update check complete. Coop County is current or will refresh on the next launch.');}
+      catch{showStatus(navigator.onLine?'The update check could not be completed.':'Connect to the internet to check for updates.');}
+    });
+
+    function openModal(id){const modal=$(id);modal.classList.add('open');modal.querySelector('.close').focus()}
+    function closeModal(modal){modal.classList.remove('open')}
+    document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.open)));
+    document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.closest('.modal-backdrop'))));
+    document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m)}));
+    addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-backdrop.open').forEach(closeModal);closeLightbox()}});
+
+    if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+    resetJournalForm();resetSocialForm();render();
+  })();
+  </script>
+</body>
+</html>
