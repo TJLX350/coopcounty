@@ -1,0 +1,7 @@
+Coop County Installation Instructions
+
+1. Extract the ZIP.
+2. Open the project folder.
+3. Serve with a local web server (recommended) or open index.html.
+4. For PWA features, use HTTPS or localhost.
+5. Data is stored locally in your browser.

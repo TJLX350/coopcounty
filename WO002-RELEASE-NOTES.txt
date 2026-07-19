@@ -1,0 +1,12 @@
+Coop County — WO002 Complete
+
+Restored and hardened the Recent Journal panel.
+
+Changes:
+- Recent Journal now renders the two newest valid Farm Journal items reliably.
+- Long notes are kept to one readable line with ellipsis instead of overflowing the panel.
+- Invalid or legacy timestamps no longer stop the entire dashboard render.
+- Empty-state text remains visible when no entries exist.
+- Recent entries use safe DOM text rendering and include full-text hover titles.
+
+Scope: Work Order 002 only.

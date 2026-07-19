@@ -1,0 +1,14 @@
+Coop County Regression Test Report
+
+Verified:
+- 30-Day Overview present
+- Recent Journal panel present
+- Menu available
+- Camera button hidden
+- Microphone button hidden
+- Coop names Daisy and Mae
+- Weather feature verified
+- Install instructions present
+- Safety checklist present
+
+No application source modifications in WO011.
